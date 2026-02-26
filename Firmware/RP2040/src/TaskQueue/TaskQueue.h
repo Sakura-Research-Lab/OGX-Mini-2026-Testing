@@ -1,6 +1,8 @@
 #ifndef TASK_QUEUE_H
 #define TASK_QUEUE_H
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <memory>

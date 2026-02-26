@@ -7,6 +7,7 @@
 
 #include "btstack_run_loop.h"
 #include "uni.h"
+#include "parser/uni_hid_parser_ds5.h"
 
 #include "sdkconfig.h"
 #include "Bluepad32/Bluepad32.h"
@@ -34,6 +35,10 @@ btstack_timer_source_t feedback_timer_;
 btstack_timer_source_t led_timer_;
 bool led_timer_set_{false};
 bool feedback_timer_set_{false};
+
+// PS5: touchpad click toggles adaptive triggers (per-controller state)
+static bool adaptive_trigger_enabled_[MAX_GAMEPADS]{false};
+static bool prev_touchpad_clicked_[MAX_GAMEPADS]{false};
 
 bool any_connected()
 {
@@ -148,6 +153,12 @@ static void init(int argc, const char** arg_V) {
 }
 
 static void init_complete_cb(void) {
+    // Faster pairing: more aggressive GAP inquiry/periodic (units: 1.28s).
+    // Defaults are inquiry=3, max=5, min=4; slightly tighter so we discover and reconnect sooner.
+    uni_bt_set_gap_inquiry_length(2);
+    uni_bt_set_gap_max_peridic_length(4);
+    uni_bt_set_gap_min_peridic_length(3);
+
     uni_bt_enable_new_connections_unsafe(true);
     // uni_bt_del_keys_unsafe();
     uni_property_dump_all();
@@ -175,6 +186,7 @@ static void device_disconnected_cb(uni_hid_device_t* device) {
     }
 
     bt_devices_[idx].connected = false;
+    prev_touchpad_clicked_[idx] = false;
     bt_devices_[idx].gamepad->reset_pad_in();
 
     if (!led_timer_set_ && !any_connected()) {
@@ -198,6 +210,20 @@ static uni_error_t device_ready_cb(uni_hid_device_t* device) {
 
     bt_devices_[idx].connected = true;
 
+    // Set controller player LED to match slot (e.g. Wii U: LED 1 = player 1, LED 2 = player 2).
+    // Same as Bluepad32 NINA platform: set_player_leds(d, BIT(idx)).
+    if (device->report_parser.set_player_leds != nullptr) {
+        device->report_parser.set_player_leds(device, static_cast<uint8_t>(1u << idx));
+    }
+
+    // PS5: start with adaptive triggers off; touchpad click toggles them.
+    if (device->controller_type == CONTROLLER_TYPE_PS5Controller) {
+        adaptive_trigger_enabled_[idx] = false;
+        ds5_adaptive_trigger_effect_t off = ds5_new_adaptive_trigger_effect_off();
+        ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_LEFT, &off);
+        ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_RIGHT, &off);
+    }
+
     if (led_timer_set_) {
         led_timer_set_ = false;
         btstack_run_loop_remove_timer(&led_timer_);
@@ -219,7 +245,7 @@ static void oob_event_cb(uni_platform_oob_event_t event, void* data) {
 
 // Set to 1 to print all Bluepad32 controller inputs to UART (only when state changes)
 #ifndef BLUEPAD32_UART_LOG_INPUT
-#define BLUEPAD32_UART_LOG_INPUT 1
+#define BLUEPAD32_UART_LOG_INPUT 0
 #endif
 
 static void controller_data_cb(uni_hid_device_t* device, uni_controller_t* controller) {
@@ -231,7 +257,25 @@ static void controller_data_cb(uni_hid_device_t* device, uni_controller_t* contr
 
     uni_gamepad_t *uni_gp = &controller->gamepad;
     int idx = uni_hid_device_get_idx_for_instance(device);
-    
+
+    // PS5: touchpad click toggles adaptive triggers on/off
+    if (device->controller_type == CONTROLLER_TYPE_PS5Controller && idx >= 0 && idx < static_cast<int>(MAX_GAMEPADS)) {
+        bool touchpad_clicked = (uni_gp->misc_buttons & MISC_BUTTON_TOUCHPAD) != 0;
+        if (touchpad_clicked && !prev_touchpad_clicked_[idx]) {
+            adaptive_trigger_enabled_[idx] = !adaptive_trigger_enabled_[idx];
+            if (adaptive_trigger_enabled_[idx]) {
+                ds5_adaptive_trigger_effect_t on = ds5_new_adaptive_trigger_effect_feedback(5, 4);
+                ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_LEFT, &on);
+                ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_RIGHT, &on);
+            } else {
+                ds5_adaptive_trigger_effect_t off = ds5_new_adaptive_trigger_effect_off();
+                ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_LEFT, &off);
+                ds5_set_adaptive_trigger_effect(device, UNI_ADAPTIVE_TRIGGER_TYPE_RIGHT, &off);
+            }
+        }
+        prev_touchpad_clicked_[idx] = touchpad_clicked;
+    }
+
 #if BLUEPAD32_UART_LOG_INPUT
     {
         bool changed = std::memcmp(uni_gp, &prev_uni_gp[idx], sizeof(uni_gamepad_t)) != 0;

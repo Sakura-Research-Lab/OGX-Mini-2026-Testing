@@ -17,6 +17,13 @@
     #define MAX_GAMEPADS 1
 #endif
 
+/** Main loop delay (device/core0) in microseconds. Lower = less input latency, higher CPU.
+ *  0 = no delay (lowest latency, highest CPU). 250–500 = good balance. 1000 = 1 ms (original).
+ *  Override in CMake: add_compile_definitions(MAIN_LOOP_DELAY_US=0) for minimum latency. */
+#ifndef MAIN_LOOP_DELAY_US
+    #define MAIN_LOOP_DELAY_US 250
+#endif
+
 #if defined(CONFIG_OGXM_BOARD_PI_PICO) || defined(CONFIG_OGXM_BOARD_PI_PICO2)
     #define OGXM_BOARD          PI_PICO
     #define PIO_USB_DP_PIN      0 // DM = 1

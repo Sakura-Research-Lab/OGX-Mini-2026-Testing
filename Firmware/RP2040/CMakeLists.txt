@@ -13,6 +13,11 @@ set(SRC ${CMAKE_CURRENT_LIST_DIR}/src)
 set(EXTERNAL_DIR ${CMAKE_CURRENT_LIST_DIR}/../external)
 set(PICOSDK_VERSION_TAG "2.1.0")
 
+# Default Pico SDK path when not set (e.g. by CMake Tools or command line)
+if(NOT PICO_SDK_PATH)
+    set(PICO_SDK_PATH ${EXTERNAL_DIR}/pico-sdk CACHE PATH "Path to Pico SDK")
+endif()
+
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/init_submodules.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/patch_libs.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/generate_gatt_header.cmake)
@@ -72,6 +77,12 @@ set(SOURCES_BOARD
     ${SRC}/USBDevice/DeviceDriver/WebApp/WebApp.cpp
     ${SRC}/USBDevice/DeviceDriver/XInput/tud_xinput/tud_xinput.cpp
     ${SRC}/USBDevice/DeviceDriver/XboxOG/tud_xid/tud_xid.cpp
+    # libxsm3 for Xbox 360 (XSM3) authentication in XInput mode
+    ${EXTERNAL_DIR}/libxsm3/xsm3.c
+    ${EXTERNAL_DIR}/libxsm3/usbdsec.c
+    ${EXTERNAL_DIR}/libxsm3/excrypt_des.c
+    ${EXTERNAL_DIR}/libxsm3/excrypt_parve.c
+    ${EXTERNAL_DIR}/libxsm3/excrypt_sha.c
 )
 set(LIBS_BOARD
     # Base
@@ -173,7 +184,49 @@ else()
 
 endif()
 
-add_definitions(-DOGXM_BOARD=${OGXM_BOARD})
+# Optional: default or lock USB output mode.
+# OGXM_FIXED_DRIVER = one of: XINPUT, DINPUT, XBOXOG, XBOXOG_SB, XBOXOG_XR, SWITCH, WIIU, PS3, PSCLASSIC, WEBAPP.
+#   Empty = use first valid driver as default, combos enabled.
+#   Set = use that mode as default (first boot / NVS init). If OGXM_FIXED_DRIVER_ALLOW_COMBOS=OFF (default):
+#     combos disabled, mode locked. If OGXM_FIXED_DRIVER_ALLOW_COMBOS=ON: default is this mode, combos still work.
+set(OGXM_FIXED_DRIVER "" CACHE STRING "Default/lock output mode. One of: XINPUT, DINPUT, XBOXOG, XBOXOG_SB, XBOXOG_XR, SWITCH, WIIU, PS3, PSCLASSIC, WEBAPP. Empty = combos enabled.")
+set(OGXM_FIXED_DRIVER_ALLOW_COMBOS OFF CACHE BOOL "If OGXM_FIXED_DRIVER is set: ON = use it as default but allow combos to change mode; OFF = lock to that mode, combos disabled.")
+if(OGXM_FIXED_DRIVER)
+    add_compile_definitions(CONFIG_OGXM_FIXED_DRIVER=1)
+    if(OGXM_FIXED_DRIVER_ALLOW_COMBOS)
+        add_compile_definitions(CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS=1)
+    endif()
+    if(OGXM_FIXED_DRIVER STREQUAL "XBOXOG")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=1)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "XBOXOG_SB")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=2)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "XBOXOG_XR")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=3)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "XINPUT")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=4)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "PS3")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=5)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "DINPUT")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=6)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "PSCLASSIC")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=7)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "SWITCH")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=8)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "WIIU")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=9)
+    elseif(OGXM_FIXED_DRIVER STREQUAL "WEBAPP")
+        add_compile_definitions(OGXM_FIXED_DRIVER_TYPE=100)
+    else()
+        message(FATAL_ERROR "OGXM_FIXED_DRIVER must be one of: XINPUT, DINPUT, XBOXOG, XBOXOG_SB, XBOXOG_XR, SWITCH, WIIU, PS3, PSCLASSIC, WEBAPP")
+    endif()
+    if(OGXM_FIXED_DRIVER_ALLOW_COMBOS)
+        message(STATUS "Default output mode: ${OGXM_FIXED_DRIVER} (combos enabled)")
+    else()
+        message(STATUS "Fixed output mode: ${OGXM_FIXED_DRIVER} (combos disabled)")
+    endif()
+endif()
+
+# Do not add -DOGXM_BOARD here; Config.h defines OGXM_BOARD from CONFIG_OGXM_BOARD_* to avoid redefinition warnings
 
 if(EN_USB_HOST)
     message(STATUS "USB host enabled.")
@@ -299,6 +352,15 @@ if(NOT EN_BLUETOOTH)
     add_compile_definitions(PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64)
 endif()
 
+# Cross-compile: skip linker in compiler check (ARM linker does not accept Windows flags)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+set(CMAKE_SYSTEM_NAME PICO)
+set(CMAKE_CXX_STANDARD_LIBRARIES "")
+set(CMAKE_C_STANDARD_LIBRARIES "")
+
+# Use our Platform/PICO.cmake so CMake does not add Windows linker flags (--out-implib, etc.)
+list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
 include(${PICO_SDK_PATH}/pico_sdk_init.cmake)
 
 project(${FW_NAME} C CXX ASM)
@@ -336,6 +398,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
  
     add_compile_definitions(CFG_TUSB_DEBUG=1)
     add_compile_definitions(OGXM_DEBUG=1)
+    add_compile_definitions(CONFIG_OGXM_DEBUG=1)
 
     target_compile_options(${FW_NAME} PRIVATE
         -Wall                # Enable most warnings
@@ -370,7 +433,9 @@ pico_set_program_version(${FW_NAME} ${FW_VERSION})
 
 target_include_directories(${FW_NAME} PRIVATE 
     ${SRC}
+    ${EXTERNAL_DIR}/libxsm3
 )
+target_compile_definitions(${FW_NAME} PRIVATE XSM3_NO_DEBUGGING=1 XSM3_EMBEDDED=1)
 
 if(EN_RGB)
     pico_generate_pio_header(${FW_NAME} ${SRC}/Board/Pico_WS2812/WS2812.pio)
@@ -404,6 +469,16 @@ if(OGXM_RETAIL STREQUAL "TRUE")
     set(EXE_FILENAME "${FW_NAME}-${FW_VERSION}-${OGXM_BOARD}${BUILD_STR}-Retail")
 else()
     set(EXE_FILENAME "${FW_NAME}-${FW_VERSION}-${OGXM_BOARD}${BUILD_STR}")
+endif()
+
+# Output filename always reflects the mode: fixed driver name (XINPUT, PS3, ...) or "Multi" for combo mode
+if(OGXM_FIXED_DRIVER)
+    set(EXE_FILENAME "${EXE_FILENAME}-${OGXM_FIXED_DRIVER}")
+    if(OGXM_FIXED_DRIVER_ALLOW_COMBOS)
+        set(EXE_FILENAME "${EXE_FILENAME}-Combos")
+    endif()
+else()
+    set(EXE_FILENAME "${EXE_FILENAME}-Multi")
 endif()
 
 set_target_properties(${FW_NAME} PROPERTIES OUTPUT_NAME ${EXE_FILENAME})

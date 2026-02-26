@@ -3,6 +3,7 @@
 #if ((OGXM_BOARD == PI_PICO) || (OGXM_BOARD == RP2040_ZERO) || (OGXM_BOARD == ADAFRUIT_FEATHER))
 
 #include <pico/multicore.h>
+#include <pico/time.h>
 
 #include "tusb.h"
 #include "bsp/board_api.h"
@@ -47,9 +48,10 @@ void core1_task() {
 }
 
 void set_gp_check_timer(uint32_t task_id) {
+#if !defined(CONFIG_OGXM_FIXED_DRIVER) || defined(CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
     UserSettings& user_settings = UserSettings::get_instance();
-    
-    TaskQueue::Core0::queue_delayed_task(task_id, UserSettings::GP_CHECK_DELAY_MS, true, 
+
+    TaskQueue::Core0::queue_delayed_task(task_id, UserSettings::GP_CHECK_DELAY_MS, true,
     [&user_settings] {
         //Check gamepad inputs for button combo to change usb device driver
         if (user_settings.check_for_driver_change(_gamepads[0])) {
@@ -58,6 +60,9 @@ void set_gp_check_timer(uint32_t task_id) {
             user_settings.store_driver_type(user_settings.get_current_driver());
         }
     });
+#else
+    (void)task_id;  // Fixed output, combos disabled
+#endif
 }
 
 //Called by tusb host so we know to connect or disconnect usb
@@ -121,7 +126,9 @@ void standard::run() {
             device_driver->process(i, _gamepads[i]);
         }
         tud_task();
-        sleep_ms(1);
+#if MAIN_LOOP_DELAY_US > 0
+        sleep_us(MAIN_LOOP_DELAY_US);
+#endif
     }
 }
 

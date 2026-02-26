@@ -2,8 +2,10 @@
 #include "OGXMini/Board/PicoW.h"
 #if (OGXM_BOARD == PI_PICOW)
 
+#include <cstdio>
 #include <hardware/clocks.h>
 #include <pico/multicore.h>
+#include <pico/time.h>
 
 #include "tusb.h"
 #include "bsp/board_api.h"
@@ -26,8 +28,9 @@ void core1_task() {
 }
 
 void set_gp_check_timer(uint32_t task_id) {
+#if !defined(CONFIG_OGXM_FIXED_DRIVER) || defined(CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
     UserSettings& user_settings = UserSettings::get_instance();
-    TaskQueue::Core0::queue_delayed_task(task_id, UserSettings::GP_CHECK_DELAY_MS, true, 
+    TaskQueue::Core0::queue_delayed_task(task_id, UserSettings::GP_CHECK_DELAY_MS, true,
     [&user_settings] {
         //Check gamepad inputs for button combo to change usb device driver
         if (user_settings.check_for_driver_change(_gamepads[0])) {
@@ -35,6 +38,9 @@ void set_gp_check_timer(uint32_t task_id) {
             user_settings.store_driver_type(user_settings.get_current_driver());
         }
     });
+#else
+    (void)task_id;  // Fixed output, combos disabled
+#endif
 }
 
 void pico_w::initialize() {
@@ -53,15 +59,20 @@ void pico_w::initialize() {
 
 void pico_w::run() {
     multicore_reset_core1();
+
+    // Initialize USB before starting core1 (BT). If BT FW download hangs, the host can
+    // still enumerate and run XSM3 auth; core1 runs Bluetooth in parallel.
+    DeviceDriver* device_driver = DeviceManager::get_instance().get_driver();
+    tud_init(BOARD_TUD_RHPORT);
+    printf("USB init done\n");
+
     multicore_launch_core1(core1_task);
+    printf("Core1 (BT) launched\n");
 
     uint32_t tid_gp_check = TaskQueue::Core0::get_new_task_id();
     set_gp_check_timer(tid_gp_check);
 
-    DeviceDriver* device_driver = DeviceManager::get_instance().get_driver();
-
-    tud_init(BOARD_TUD_RHPORT);
-
+    static bool mounted_logged = false;
     while (true) {
         TaskQueue::Core0::process_tasks();
 
@@ -69,7 +80,13 @@ void pico_w::run() {
             device_driver->process(i, _gamepads[i]);
             tud_task();
         }
-        sleep_ms(1);
+        if (tud_mounted() && !mounted_logged) {
+            mounted_logged = true;
+            printf("USB configured (host enumerated)\n");
+        }
+#if MAIN_LOOP_DELAY_US > 0
+        sleep_us(MAIN_LOOP_DELAY_US);
+#endif
     }
 }
 

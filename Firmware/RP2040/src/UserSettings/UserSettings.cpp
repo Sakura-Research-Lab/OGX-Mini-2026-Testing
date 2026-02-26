@@ -107,12 +107,20 @@ const std::string UserSettings::DATETIME_KEY()
 
 DeviceDriverType UserSettings::DEFAULT_DRIVER()
 {
+#if defined(CONFIG_OGXM_FIXED_DRIVER)
+    return static_cast<DeviceDriverType>(OGXM_FIXED_DRIVER_TYPE);
+#else
     return VALID_DRIVER_TYPES[0];
+#endif
 }
 
 //Checks if button combo has been held for 3 seconds, returns true if mode has been changed
 bool UserSettings::check_for_driver_change(Gamepad& gamepad)
 {
+#if defined(CONFIG_OGXM_FIXED_DRIVER) && !defined(CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
+    (void)gamepad;
+    return false;  // Fixed output build: combos disabled
+#else
     Gamepad::PadIn gp_in = gamepad.get_pad_in();
     static uint32_t last_button_combo = BUTTON_COMBO(gp_in.buttons, gp_in.dpad);
     static uint8_t call_count = 0;
@@ -155,6 +163,7 @@ bool UserSettings::check_for_driver_change(Gamepad& gamepad)
     current_driver_ = new_driver;
 
     return true;
+#endif  // !(CONFIG_OGXM_FIXED_DRIVER && !CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
 }
 
 //Disconnects usb and resets pico, call from core0
@@ -285,6 +294,9 @@ bool UserSettings::is_valid_driver(DeviceDriverType driver)
 
 DeviceDriverType UserSettings::get_current_driver()
 {
+#if defined(CONFIG_OGXM_FIXED_DRIVER) && !defined(CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
+    return static_cast<DeviceDriverType>(OGXM_FIXED_DRIVER_TYPE);
+#else
     if (current_driver_ != DeviceDriverType::NONE)
     {
         return current_driver_;
@@ -305,6 +317,7 @@ DeviceDriverType UserSettings::get_current_driver()
 
     current_driver_ = DEFAULT_DRIVER();
     return current_driver_;
+#endif  // !(CONFIG_OGXM_FIXED_DRIVER && !CONFIG_OGXM_FIXED_DRIVER_ALLOW_COMBOS)
 }
 
 void UserSettings::write_datetime()

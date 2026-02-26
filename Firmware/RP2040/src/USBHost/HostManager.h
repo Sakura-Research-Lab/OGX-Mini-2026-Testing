@@ -204,7 +204,8 @@ public:
 			}
 			for (uint8_t i = 0; i < MAX_INTERFACES; ++i)
 			{
-				if (device_slot.interfaces[i].driver && device_slot.interfaces[i].gamepad->new_pad_out())
+				if (device_slot.interfaces[i].driver &&
+				(device_slot.interfaces[i].gamepad->new_pad_out() || device_slot.interfaces[i].gamepad->has_rumble()))
 				{
 					device_slot.interfaces[i].driver->send_feedback(*device_slot.interfaces[i].gamepad, device_slot.address, i);
 					tuh_task();

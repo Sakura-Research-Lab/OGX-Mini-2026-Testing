@@ -143,6 +143,15 @@ public:
     inline bool new_pad_in() const { return new_pad_in_.load(); }
     inline bool new_pad_out() const { return new_pad_out_.load(); }
 
+    // True if current pad_out has non-zero rumble (read-only, does not clear new_pad_out).
+    inline bool has_rumble()
+    {
+        mutex_enter_blocking(&pad_out_mutex_);
+        bool r = (pad_out_.rumble_l > 0 || pad_out_.rumble_r > 0);
+        mutex_exit(&pad_out_mutex_);
+        return r;
+    }
+
     //True if both host and device have enabled analog
     inline bool analog_enabled() const { return analog_enabled_.load(std::memory_order_relaxed); }
 
@@ -378,7 +387,9 @@ private:
     void set_profile_settings(const UserProfile& profile)
     {
         profile_analog_enabled_ = profile.analog_enabled ? true : false;
+#if 0
         OGXM_LOG("profile_analog_enabled_: %d\n", profile_analog_enabled_);
+#endif
 
         if ((joy_settings_l_en_ = !joy_settings_l_.is_same(profile.joystick_settings_l)))
         {
@@ -405,11 +416,13 @@ private:
             trig_settings_r_.set_from_raw(profile.trigger_settings_r);
         }
 
+#if 0
         OGXM_LOG("GamepadMapper: JoyL: %s, JoyR: %s, TrigL: %s, TrigR: %s\n",
             joy_settings_l_en_ ? "Enabled" : "Disabled",
             joy_settings_r_en_ ? "Enabled" : "Disabled",
             trig_settings_l_en_ ? "Enabled" : "Disabled",
             trig_settings_r_en_ ? "Enabled" : "Disabled");
+#endif
     }
 
     void set_profile_mappings(const UserProfile& profile)

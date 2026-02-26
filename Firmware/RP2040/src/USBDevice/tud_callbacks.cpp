@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdio>
 
 #include "tusb.h"
 #include "class/hid/hid_device.h"
@@ -26,6 +27,8 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
 
 bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const *request) 
 {
+	printf("tud_vendor_cb bReq 0x%02x stage %u type 0x%02x wIdx 0x%04x\n",
+		(unsigned)request->bRequest, (unsigned)stage, (unsigned)request->bmRequestType, (unsigned)request->wIndex);
 	return DeviceManager::get_instance().get_driver()->vendor_control_xfer_cb(rhport, stage, request);
 }
 

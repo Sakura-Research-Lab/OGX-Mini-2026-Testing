@@ -71,25 +71,40 @@ void PS3Device::process(const uint8_t idx, Gamepad& gamepad)
         if (gp_in.trigger_l) report_in_.buttons[1] |= PS3::Buttons1::L2;
         if (gp_in.trigger_r) report_in_.buttons[1] |= PS3::Buttons1::R2;
 
-        report_in_.joystick_lx = Scale::int16_to_uint8(gp_in.joystick_lx);
-        report_in_.joystick_ly = Scale::int16_to_uint8(gp_in.joystick_ly);
-        report_in_.joystick_rx = Scale::int16_to_uint8(gp_in.joystick_rx);
-        report_in_.joystick_ry = Scale::int16_to_uint8(gp_in.joystick_ry);
+        // L2/R2 axis values (critical for PS3 games - avoids stuck triggers)
+        report_in_.l2_axis = gp_in.trigger_l;
+        report_in_.r2_axis = gp_in.trigger_r;
+
+        // PS3 uses 0x7F (127) as joystick center; 5% deadzone avoids drift/stuck inputs
+        constexpr int16_t DEADZONE_LEFT = 1640;   // ~5% of 32768
+        constexpr int16_t DEADZONE_RIGHT = 1640;
+        constexpr uint8_t PS3_CENTER = 0x7F;
+
+        auto joystick_to_ps3 = [](int16_t value, int16_t deadzone) -> uint8_t {
+            if (value > -deadzone && value < deadzone)
+                return PS3_CENTER;
+            int32_t scaled = ((static_cast<int32_t>(value) + 32768) * 254) / 65535;
+            return static_cast<uint8_t>(scaled);
+        };
+
+        report_in_.joystick_lx = joystick_to_ps3(gp_in.joystick_lx, DEADZONE_LEFT);
+        report_in_.joystick_ly = joystick_to_ps3(gp_in.joystick_ly, DEADZONE_LEFT);
+        report_in_.joystick_rx = joystick_to_ps3(gp_in.joystick_rx, DEADZONE_RIGHT);
+        report_in_.joystick_ry = joystick_to_ps3(gp_in.joystick_ry, DEADZONE_RIGHT);
 
         if (gamepad.analog_enabled())
         {
-            report_in_.up_axis      = gp_in.analog[Gamepad::ANALOG_OFF_UP];
-            report_in_.down_axis    = gp_in.analog[Gamepad::ANALOG_OFF_DOWN];
-            report_in_.right_axis   = gp_in.analog[Gamepad::ANALOG_OFF_RIGHT];
-            report_in_.left_axis    = gp_in.analog[Gamepad::ANALOG_OFF_LEFT];
-
             report_in_.triangle_axis = gp_in.analog[Gamepad::ANALOG_OFF_Y];
             report_in_.circle_axis   = gp_in.analog[Gamepad::ANALOG_OFF_B];
             report_in_.cross_axis    = gp_in.analog[Gamepad::ANALOG_OFF_A];
             report_in_.square_axis   = gp_in.analog[Gamepad::ANALOG_OFF_X];
-
             report_in_.r1_axis = gp_in.analog[Gamepad::ANALOG_OFF_RB];
             report_in_.l1_axis = gp_in.analog[Gamepad::ANALOG_OFF_LB];
+            // D-pad: use digital conversion to avoid noisy analog causing stuck inputs
+            report_in_.up_axis    = (gp_in.dpad & Gamepad::DPAD_UP)    ? 0xFF : 0;
+            report_in_.down_axis  = (gp_in.dpad & Gamepad::DPAD_DOWN)  ? 0xFF : 0;
+            report_in_.right_axis = (gp_in.dpad & Gamepad::DPAD_RIGHT) ? 0xFF : 0;
+            report_in_.left_axis  = (gp_in.dpad & Gamepad::DPAD_LEFT)  ? 0xFF : 0;
         }
         else
         {
@@ -99,9 +114,9 @@ void PS3Device::process(const uint8_t idx, Gamepad& gamepad)
             report_in_.left_axis     = (gp_in.dpad & Gamepad::DPAD_LEFT)  ? 0xFF : 0;
 
             report_in_.triangle_axis = (gp_in.buttons & Gamepad::BUTTON_Y) ? 0xFF : 0;
-            report_in_.circle_axis   = (gp_in.buttons & Gamepad::BUTTON_X) ? 0xFF : 0;
-            report_in_.cross_axis    = (gp_in.buttons & Gamepad::BUTTON_B) ? 0xFF : 0;
-            report_in_.square_axis   = (gp_in.buttons & Gamepad::BUTTON_A) ? 0xFF : 0;
+            report_in_.circle_axis   = (gp_in.buttons & Gamepad::BUTTON_B) ? 0xFF : 0;
+            report_in_.cross_axis    = (gp_in.buttons & Gamepad::BUTTON_A) ? 0xFF : 0;
+            report_in_.square_axis   = (gp_in.buttons & Gamepad::BUTTON_X) ? 0xFF : 0;
 
             report_in_.r1_axis = (gp_in.buttons & Gamepad::BUTTON_RB) ? 0xFF : 0;
             report_in_.l1_axis = (gp_in.buttons & Gamepad::BUTTON_LB) ? 0xFF : 0;

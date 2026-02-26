@@ -84,7 +84,11 @@ void PS5Host::process_report(Gamepad& gamepad, uint8_t address, uint8_t instance
     if (in_report->buttons[1] & PS5::Buttons1::SHARE)    gp_in.buttons |= gamepad.MAP_BUTTON_BACK;
     if (in_report->buttons[1] & PS5::Buttons1::OPTIONS)  gp_in.buttons |= gamepad.MAP_BUTTON_START;
     if (in_report->buttons[2] & PS5::Buttons2::PS)       gp_in.buttons |= gamepad.MAP_BUTTON_SYS;
-    if (in_report->buttons[2] & PS5::Buttons2::MUTE)     gp_in.buttons |= gamepad.MAP_BUTTON_MISC;
+    if (in_report->buttons[2] & PS5::Buttons2::TP)       gp_in.buttons |= gamepad.MAP_BUTTON_MISC;  // Touchpad press
+    if (in_report->buttons[2] & PS5::Buttons2::MUTE)     gp_in.buttons |= gamepad.MAP_BUTTON_MISC;  // Mute button
+    // Touchpad finger touch (no click) – report has two points
+    if (in_report->points[0].touching || in_report->points[1].touching)
+        gp_in.buttons |= gamepad.MAP_BUTTON_MISC;
 
     gp_in.trigger_l = gamepad.scale_trigger_l(in_report->trigger_l);
     gp_in.trigger_r = gamepad.scale_trigger_r(in_report->trigger_r);
