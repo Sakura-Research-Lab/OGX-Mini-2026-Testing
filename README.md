@@ -9,7 +9,7 @@ Firmware for the RP2040, capable of emulating gamepads for several game consoles
 - Original Xbox
 - Playstation 3
 - Nintendo Switch 1 & 2 (docked)
-- XInput (use [**UsbdSecPatch**](https://github.com/InvoxiPlayGames/UsbdSecPatch) for Xbox 360, or select the patch in J-Runner while flashing your NAND)
+- XInput (UsbdSecPatch no longer required, works without it)
 - Playstation Classic
 - DInput
 - Wii U (GameCube Adapter)
