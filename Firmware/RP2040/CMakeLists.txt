@@ -228,6 +228,10 @@ endif()
 
 # Do not add -DOGXM_BOARD here; Config.h defines OGXM_BOARD from CONFIG_OGXM_BOARD_* to avoid redefinition warnings
 
+# Main loop delay (microseconds). 0 = lowest latency (default). Set to 250+ for lower CPU.
+set(MAIN_LOOP_DELAY_US 0 CACHE STRING "Main loop delay in microseconds; 0 = low latency (default)")
+add_compile_definitions(MAIN_LOOP_DELAY_US=${MAIN_LOOP_DELAY_US})
+
 if(EN_USB_HOST)
     message(STATUS "USB host enabled.")
     add_compile_definitions(CONFIG_EN_USB_HOST=1)

@@ -53,71 +53,67 @@ void XInputDevice::process(const uint8_t idx, Gamepad& gamepad)
 	// joypad-os: run XSM3 crypto in task loop, not in USB callback
 	xsm3_process_pending();
 
-    if (gamepad.new_pad_in())
-    {
-        in_report_.buttons[0] = 0;
-        in_report_.buttons[1] = 0;
+	// Always read latest state and send when USB is ready (reduces latency vs only sending on new_pad_in())
+	in_report_.buttons[0] = 0;
+	in_report_.buttons[1] = 0;
 
-        Gamepad::PadIn gp_in = gamepad.get_pad_in();
+	Gamepad::PadIn gp_in = gamepad.get_pad_in();
 
-        switch (gp_in.dpad)
-        {
-            case Gamepad::DPAD_UP:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_UP;
-                break;
-            case Gamepad::DPAD_DOWN:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN;
-                break;
-            case Gamepad::DPAD_LEFT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_RIGHT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_RIGHT;
-                break;
-            case Gamepad::DPAD_UP_LEFT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_UP | XInput::Buttons0::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_UP_RIGHT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_UP | XInput::Buttons0::DPAD_RIGHT;
-                break;
-            case Gamepad::DPAD_DOWN_LEFT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN | XInput::Buttons0::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_DOWN_RIGHT:
-                in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN | XInput::Buttons0::DPAD_RIGHT;
-                break;
-            default:
-                break;
-        }
+	switch (gp_in.dpad)
+	{
+		case Gamepad::DPAD_UP:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_UP;
+			break;
+		case Gamepad::DPAD_DOWN:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN;
+			break;
+		case Gamepad::DPAD_LEFT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_LEFT;
+			break;
+		case Gamepad::DPAD_RIGHT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_RIGHT;
+			break;
+		case Gamepad::DPAD_UP_LEFT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_UP | XInput::Buttons0::DPAD_LEFT;
+			break;
+		case Gamepad::DPAD_UP_RIGHT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_UP | XInput::Buttons0::DPAD_RIGHT;
+			break;
+		case Gamepad::DPAD_DOWN_LEFT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN | XInput::Buttons0::DPAD_LEFT;
+			break;
+		case Gamepad::DPAD_DOWN_RIGHT:
+			in_report_.buttons[0] = XInput::Buttons0::DPAD_DOWN | XInput::Buttons0::DPAD_RIGHT;
+			break;
+		default:
+			break;
+	}
 
-        if (gp_in.buttons & Gamepad::BUTTON_BACK)  in_report_.buttons[0] |= XInput::Buttons0::BACK;
-        if (gp_in.buttons & Gamepad::BUTTON_START) in_report_.buttons[0] |= XInput::Buttons0::START;
-        if (gp_in.buttons & Gamepad::BUTTON_L3)    in_report_.buttons[0] |= XInput::Buttons0::L3;
-        if (gp_in.buttons & Gamepad::BUTTON_R3)    in_report_.buttons[0] |= XInput::Buttons0::R3;
+	if (gp_in.buttons & Gamepad::BUTTON_BACK)  in_report_.buttons[0] |= XInput::Buttons0::BACK;
+	if (gp_in.buttons & Gamepad::BUTTON_START) in_report_.buttons[0] |= XInput::Buttons0::START;
+	if (gp_in.buttons & Gamepad::BUTTON_L3)    in_report_.buttons[0] |= XInput::Buttons0::L3;
+	if (gp_in.buttons & Gamepad::BUTTON_R3)    in_report_.buttons[0] |= XInput::Buttons0::R3;
 
-        if (gp_in.buttons & Gamepad::BUTTON_X)     in_report_.buttons[1] |= XInput::Buttons1::X;
-        if (gp_in.buttons & Gamepad::BUTTON_A)     in_report_.buttons[1] |= XInput::Buttons1::A;
-        if (gp_in.buttons & Gamepad::BUTTON_Y)     in_report_.buttons[1] |= XInput::Buttons1::Y;
-        if (gp_in.buttons & Gamepad::BUTTON_B)     in_report_.buttons[1] |= XInput::Buttons1::B;
-        if (gp_in.buttons & Gamepad::BUTTON_LB)    in_report_.buttons[1] |= XInput::Buttons1::LB;
-        if (gp_in.buttons & Gamepad::BUTTON_RB)    in_report_.buttons[1] |= XInput::Buttons1::RB;
-        if (gp_in.buttons & Gamepad::BUTTON_SYS)   in_report_.buttons[1] |= XInput::Buttons1::HOME;
+	if (gp_in.buttons & Gamepad::BUTTON_X)     in_report_.buttons[1] |= XInput::Buttons1::X;
+	if (gp_in.buttons & Gamepad::BUTTON_A)     in_report_.buttons[1] |= XInput::Buttons1::A;
+	if (gp_in.buttons & Gamepad::BUTTON_Y)     in_report_.buttons[1] |= XInput::Buttons1::Y;
+	if (gp_in.buttons & Gamepad::BUTTON_B)     in_report_.buttons[1] |= XInput::Buttons1::B;
+	if (gp_in.buttons & Gamepad::BUTTON_LB)    in_report_.buttons[1] |= XInput::Buttons1::LB;
+	if (gp_in.buttons & Gamepad::BUTTON_RB)    in_report_.buttons[1] |= XInput::Buttons1::RB;
+	if (gp_in.buttons & Gamepad::BUTTON_SYS)   in_report_.buttons[1] |= XInput::Buttons1::HOME;
 
-        in_report_.trigger_l = gp_in.trigger_l;
-        in_report_.trigger_r = gp_in.trigger_r;
+	in_report_.trigger_l = gp_in.trigger_l;
+	in_report_.trigger_r = gp_in.trigger_r;
 
-        in_report_.joystick_lx = gp_in.joystick_lx;
-        in_report_.joystick_ly = Range::invert(gp_in.joystick_ly);
-        in_report_.joystick_rx = gp_in.joystick_rx;
-        in_report_.joystick_ry = Range::invert(gp_in.joystick_ry);
+	in_report_.joystick_lx = gp_in.joystick_lx;
+	in_report_.joystick_ly = Range::invert(gp_in.joystick_ly);
+	in_report_.joystick_rx = gp_in.joystick_rx;
+	in_report_.joystick_ry = Range::invert(gp_in.joystick_ry);
 
-        if (tud_suspended())
-        {
-            tud_remote_wakeup();
-        }
+	if (tud_suspended())
+		tud_remote_wakeup();
 
-        tud_xinput::send_report((uint8_t*)&in_report_, sizeof(XInput::InReport));
-    }
+	tud_xinput::send_report((uint8_t*)&in_report_, sizeof(XInput::InReport));
 
     if (tud_xinput::receive_report(reinterpret_cast<uint8_t*>(&out_report_), sizeof(XInput::OutReport)) &&
         out_report_.report_id == XInput::OutReportID::RUMBLE)
