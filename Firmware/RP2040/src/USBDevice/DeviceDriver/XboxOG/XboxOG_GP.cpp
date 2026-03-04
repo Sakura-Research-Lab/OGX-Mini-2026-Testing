@@ -41,12 +41,12 @@ void XboxOGDevice::process(const uint8_t idx, Gamepad& gamepad)
             
             if (hold_time_ms >= 3000)
             {
-                // 3s combo: LT + RT + Back + White - Shutdown
+                // 3s combo: LT + RT + Up + Back - Shutdown
                 gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
                 gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
+                gp_in.buttons |= Gamepad::DPAD_UP;
                 gp_in.buttons |= Gamepad::BUTTON_BACK;
-                gp_in.buttons |= Gamepad::BUTTON_LB;
-                sys_button_combo_sent_ = true;
+				sys_button_combo_sent_ = true;
             }
             else if (hold_time_ms >= 1000)
             {
@@ -71,12 +71,12 @@ void XboxOGDevice::process(const uint8_t idx, Gamepad& gamepad)
             
             if (hold_time_ms >= 3000)
             {
-                // 3s combo: LT + RT + Start + White - Shutdown
+                // 3s combo: LT + RT + Up + Back - Shutdown
                 gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
                 gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
-                gp_in.buttons |= Gamepad::BUTTON_START;
-                gp_in.buttons |= Gamepad::BUTTON_RB;
-                sys_button_combo_sent_ = true;
+                gp_in.buttons |= Gamepad::DPAD_UP;
+                gp_in.buttons |= Gamepad::BUTTON_BACK;
+				sys_button_combo_sent_ = true;
             }
             else if (hold_time_ms >= 1000)
             {
