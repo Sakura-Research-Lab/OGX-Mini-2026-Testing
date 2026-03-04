@@ -5,6 +5,7 @@
 
 #include "USBDevice/DeviceDriver/DeviceDriver.h"
 #include "Descriptors/XboxOG.h"
+#include <pico/time.h>
 
 class XboxOGDevice : public DeviceDriver 
 {
@@ -23,6 +24,10 @@ public:
 private:
     XboxOG::GP::InReport in_report_;
     XboxOG::GP::OutReport out_report_;
+    
+    bool sys_button_pressed_{false};
+    bool sys_button_combo_sent_{false};
+    absolute_time_t sys_button_press_time_;
 };
 
 #endif // _XBOXGOG_DEVICE_H_

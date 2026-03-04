@@ -3,6 +3,7 @@
 
 #include "USBDevice/DeviceDriver/XboxOG/tud_xid/tud_xid.h"
 #include "USBDevice/DeviceDriver/XboxOG/XboxOG_GP.h"
+#include "Board/ogxm_log.h"
 
 void XboxOGDevice::initialize() 
 {
@@ -19,6 +20,79 @@ void XboxOGDevice::process(const uint8_t idx, Gamepad& gamepad)
     {
         std::memset(&in_report_.buttons, 0, 8);
         Gamepad::PadIn gp_in = gamepad.get_pad_in();
+
+        // Check for SYS button long-press
+        bool sys_pressed = (gp_in.buttons & Gamepad::BUTTON_SYS) != 0;
+        
+        if (sys_pressed && !sys_button_pressed_)
+        {
+            // SYS button just pressed
+            sys_button_pressed_ = true;
+            sys_button_press_time_ = get_absolute_time();
+            sys_button_combo_sent_ = false;
+        }
+        else if (!sys_pressed && sys_button_pressed_)
+        {
+            // SYS button released
+            sys_button_pressed_ = false;
+            
+            // Calculate how long it was held
+            uint64_t hold_time_ms = to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(sys_button_press_time_);
+            
+            if (hold_time_ms >= 3000)
+            {
+                // 3s combo: LT + RT + Back + White - Shutdown
+                gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
+                gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
+                gp_in.buttons |= Gamepad::BUTTON_BACK;
+                gp_in.buttons |= Gamepad::BUTTON_LB;
+                sys_button_combo_sent_ = true;
+            }
+            else if (hold_time_ms >= 1000)
+            {
+                // 1s combo: LT + RT + Start + SELECT - Soft IGR
+                gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
+                gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
+                gp_in.buttons |= Gamepad::BUTTON_START;
+                gp_in.buttons |= Gamepad::BUTTON_BACK;
+                sys_button_combo_sent_ = true;
+            }
+            else
+            {
+                // Under 1s: treat as normal START button
+                gp_in.buttons |= Gamepad::BUTTON_START;
+                sys_button_combo_sent_ = true;
+            }
+        }
+        else if (sys_pressed && !sys_button_combo_sent_)
+        {
+            // Button still held - check if we should send a combo
+            uint64_t hold_time_ms = to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(sys_button_press_time_);
+            
+            if (hold_time_ms >= 3000)
+            {
+                // 3s combo: LT + RT + Start + White - Shutdown
+                gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
+                gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
+                gp_in.buttons |= Gamepad::BUTTON_START;
+                gp_in.buttons |= Gamepad::BUTTON_RB;
+                sys_button_combo_sent_ = true;
+            }
+            else if (hold_time_ms >= 1000)
+            {
+                // 1s combo: LT + RT + Start + Back - Soft IGR
+                gp_in.trigger_l = gamepad.scale_trigger_l(0xFF);
+                gp_in.trigger_r = gamepad.scale_trigger_r(0xFF);
+                gp_in.buttons |= Gamepad::BUTTON_START;
+                gp_in.buttons |= Gamepad::BUTTON_BACK;
+                sys_button_combo_sent_ = true;
+            }
+            else
+            {
+                // Under 1s: treat as START button
+                gp_in.buttons |= Gamepad::BUTTON_START;
+            }
+        }
 
         switch (gp_in.dpad)
         {
