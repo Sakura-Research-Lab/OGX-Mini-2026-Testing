@@ -18,6 +18,7 @@ public:
 
 private:
     XInput::InReport prev_in_report_;
+    uint32_t tid_keepalive_{0};
 };
 
 #endif // _XBOX360_WIRED_HOST_H_
