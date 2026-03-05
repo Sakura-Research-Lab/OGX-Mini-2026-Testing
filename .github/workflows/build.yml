@@ -18,9 +18,14 @@ jobs:
           - PI_PICO2
           - PI_PICOW
           - PI_PICO2W
-          - RP2040_ZERO
           - RP2350_USB_A
+          - RP2350_ZERO
+          - RP2354
+          - RP2040_XIAO
+          - RP2040_ZERO
           - ADAFRUIT_FEATHER
+          - ESP32_BLUEPAD32_I2C
+          - ESP32_BLUERETRO_I2C
           #- EXTERNAL_4CH_I2C
 
     steps:
