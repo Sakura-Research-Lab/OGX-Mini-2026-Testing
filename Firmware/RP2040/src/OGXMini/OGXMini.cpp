@@ -23,6 +23,9 @@ namespace OGXMini {
         four_ch_i2c::initialize,    // EXTERNAL_4CH_I2C
         four_ch_i2c::initialize,    // INTERNAL_4CH_I2C
         standard::initialize,       // RP2350_USB_A
+        standard::initialize,       // RP2350_ZERO
+        standard::initialize,       // RP2040_XIAO
+        standard::initialize,       // RP2354
     };
 
     static constexpr RunFunc run_func[BOARDS_COUNT] = {
@@ -35,6 +38,10 @@ namespace OGXMini {
         four_ch_i2c::run,       // EXTERNAL_4CH_I2C
         four_ch_i2c::run,       // INTERNAL_4CH_I2C
         standard::run,          // RP2350_USB_A
+        standard::run,          // RP2350_ZERO
+        standard::run,          // RP2040_XIAO
+        standard::run,          // RP2354
+
     };
 
     static constexpr HostMountedFunc host_mount_func[BOARDS_COUNT] = {
@@ -47,6 +54,9 @@ namespace OGXMini {
         four_ch_i2c::host_mounted,  // EXTERNAL_4CH_I2C
         four_ch_i2c::host_mounted,  // INTERNAL_4CH_I2C
         standard::host_mounted,     // RP2350_USB_A
+        standard::host_mounted,     // RP2350_ZERO
+        standard::host_mounted,     // RP2040_XIAO
+        standard::host_mounted,     // RP2354
     };
 
     static constexpr HostMountedWTypeFunc host_mount_w_type_func[BOARDS_COUNT] = {
@@ -59,6 +69,9 @@ namespace OGXMini {
         four_ch_i2c::host_mounted_w_type,   // EXTERNAL_4CH_I2C
         four_ch_i2c::host_mounted_w_type,   // INTERNAL_4CH_I2C
         nullptr,                            // RP2350_USB_A
+        nullptr,                            // RP2350_ZERO
+        nullptr,                            // RP2040_XIAO
+        nullptr,                            // RP2354
     };
 
     static constexpr WirelessConnectedFunc wl_conn_func[BOARDS_COUNT] = {
@@ -71,6 +84,9 @@ namespace OGXMini {
         four_ch_i2c::wireless_connected,    // EXTERNAL_4CH_I2C
         four_ch_i2c::wireless_connected,    // INTERNAL_4CH_I2C
         nullptr,                            // RP2350_USB_A
+        nullptr,                            // RP2350_ZERO
+        nullptr,                            // RP2040_XIAO
+        nullptr,                            // RP2354
     };
 
     void initialize() {
