@@ -10,7 +10,10 @@
 #define EXTERNAL_4CH_I2C    6
 #define INTERNAL_4CH_I2C    7
 #define RP2350_USB_A        8
-#define BOARDS_COUNT        9
+#define RP2350_ZERO         9
+#define RP2040_XIAO         10
+#define RP2354              11
+#define BOARDS_COUNT        12
 
 #define SYSCLOCK_KHZ 240000
 
@@ -104,6 +107,23 @@
     #define OGXM_BOARD          RP2350_USB_A
     #define PIO_USB_DP_PIN      12
     #define RGB_PXL_PIN         16
+
+#elif defined(CONFIG_OGXM_BOARD_RP2350_ZERO)
+    #define OGXM_BOARD          RP2350_ZERO
+    #define PIO_USB_DP_PIN      10 // DM = 11
+    #define RGB_PXL_PIN         16
+
+#elif defined(CONFIG_OGXM_BOARD_RP2040_XIAO)
+    #define OGXM_BOARD          RP2040_XIAO
+    #define RGB_PXL_PIN         12
+    #define RGB_PWR_PIN         11
+    #define PIO_USB_DP_PIN      0 // DM = 1
+    #define LED_INDICATOR_PIN   17
+
+#elif defined(CONFIG_OGXM_BOARD_RP2354)
+    #define OGXM_BOARD          RP2354
+    #define PIO_USB_DP_PIN      0 // DM = 1
+    #define LED_INDICATOR_PIN   25
 
 #else
     #error "Invalid OGXMini board selected"
