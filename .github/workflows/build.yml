@@ -54,7 +54,7 @@ jobs:
           cmake --build .
 
           # Move the generated .uf2 file to output/ without knowing the exact version
-          FILE=$(find . -name "OGX-Mini-*-${{ matrix.board }}.uf2" | head -n 1)
+          FILE=$(find . -name "*.uf2" | head -n 1)
           cp "$FILE" ../output/
 
       - name: Upload UF2 Artifact
