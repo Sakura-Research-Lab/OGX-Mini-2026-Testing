@@ -1,6 +1,6 @@
 #include "Board/Config.h"
 #include "OGXMini/Board/Standard.h"
-#if ((OGXM_BOARD == PI_PICO) || (OGXM_BOARD == RP2040_ZERO) || (OGXM_BOARD == ADAFRUIT_FEATHER) || (OGXM_BOARD == RP2350_USB_A))
+#if ((OGXM_BOARD == PI_PICO) || (OGXM_BOARD == RP2040_ZERO) || (OGXM_BOARD == ADAFRUIT_FEATHER) || (OGXM_BOARD == RP2350_USB_A) || (OGXM_BOARD == RP2350_ZERO) || (OGXM_BOARD == RP2040_XIAO) || (OGXM_BOARD == RP2354))
 
 #include <pico/multicore.h>
 #include <pico/time.h>
@@ -132,10 +132,10 @@ void standard::run() {
     }
 }
 
-// #else // OGXM_BOARD == PI_PICO || OGXM_BOARD == RP2040_ZERO || OGXM_BOARD == ADAFRUIT_FEATHER
+// #else // OGXM_BOARD == PI_PICO || OGXM_BOARD == RP2040_ZERO || OGXM_BOARD == ADAFRUIT_FEATHER || OGXM_BOARD == RP2350_USB_A || OGXM_BOARD == RP2350_ZERO || OGXM_BOARD == RP2040_XIAO || OGXM_BOARD == RP2354
 
 // void standard::host_mounted(bool host_mounted) {}
 // void standard::initialize() {}
 // void standard::run() {}
 
-#endif // OGXM_BOARD == PI_PICO || OGXM_BOARD == RP2040_ZERO || OGXM_BOARD == ADAFRUIT_FEATHER
+#endif // OGXM_BOARD == PI_PICO || OGXM_BOARD == RP2040_ZERO || OGXM_BOARD == ADAFRUIT_FEATHER || OGXM_BOARD == RP2350_USB_A || OGXM_BOARD == RP2350_ZERO || OGXM_BOARD == RP2040_XIAO || OGXM_BOARD == RP2354
