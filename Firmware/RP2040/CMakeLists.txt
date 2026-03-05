@@ -190,6 +190,24 @@ elseif(OGXM_BOARD STREQUAL "RP2350_USB_A")
     set(EN_RGB TRUE)
     set(FLASH_SIZE_MB 2)
 
+elseif(OGXM_BOARD STREQUAL "RP2350_ZERO")
+    add_compile_definitions(CONFIG_OGXM_BOARD_RP2350_ZERO)
+    set(EN_USB_HOST TRUE)
+    set(PICO_PLATFORM rp2350)
+    set(EN_RGB TRUE)
+    set(FLASH_SIZE_MB 2)
+
+elseif(OGXM_BOARD STREQUAL "RP2040_XIAO")
+    add_compile_definitions(CONFIG_OGXM_BOARD_RP2040_XIAO=1)
+    set(EN_USB_HOST TRUE)
+    set(EN_RGB TRUE)
+
+elseif(OGXM_BOARD STREQUAL "RP2354")
+    add_compile_definitions(CONFIG_OGXM_BOARD_RP2354)
+    set(EN_USB_HOST TRUE)
+    set(PICO_PLATFORM rp2350)
+    set(FLASH_SIZE_MB 2)
+
 else()
     message(FATAL_ERROR "Invalid OGXM_BOARD value. See options in src/board_config.h")
 
