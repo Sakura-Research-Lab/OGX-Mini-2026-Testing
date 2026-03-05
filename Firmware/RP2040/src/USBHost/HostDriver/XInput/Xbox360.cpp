@@ -9,11 +9,20 @@
 void Xbox360Host::initialize(Gamepad& gamepad, uint8_t address, uint8_t instance, const uint8_t* report_desc, uint16_t desc_len)
 {
     tuh_xinput::set_led(address, instance, idx_ + 1, true);
-    // Sets LED every 2 seconds to keep 8BitDo Ultimate 1C controllers alive. May cause LED weirdness or other issues on wired 360 controllers.
-    tid_keepalive_ = TaskQueue::Core1::get_new_task_id();
-    TaskQueue::Core1::queue_delayed_task(tid_keepalive_, 2000, true, [address, instance, this] {
-        tuh_xinput::set_led(address, instance, idx_ + 1, false);
-    });
+
+    uint16_t vid, pid;
+    tuh_vid_pid_get(address, &vid, &pid);
+
+    bool is_8bitdo = (vid == 0x2DC8) && (pid == 0x3016 || pid == 0x3106);
+
+    if (is_8bitdo) 
+    {
+        tid_keepalive_ = TaskQueue::Core1::get_new_task_id();
+        
+        TaskQueue::Core1::queue_delayed_task(tid_keepalive_, 1000, true, [address, instance, this] {
+            tuh_xinput::set_led(address, instance, idx_ + 1, false);
+        });
+    }
 
     tuh_xinput::receive_report(address, instance);
 }
