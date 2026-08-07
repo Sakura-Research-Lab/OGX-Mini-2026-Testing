@@ -1,4 +1,4 @@
-# OGX-Mini 2026
+# OGX-Mini 2026 - Sakura Research Lab Testing Branch
 Testing build for OGX-Mini-2026. Aims to incorporate the following changes:
 - Xbox 360 wireless controller vibration fix 
 - 8BitDo controller heartbeat fix
