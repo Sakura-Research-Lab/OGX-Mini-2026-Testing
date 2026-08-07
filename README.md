@@ -1,9 +1,9 @@
 # OGX-Mini 2026 - Sakura Research Lab Testing Branch
 Testing build for OGX-Mini-2026. Aims to incorporate the following changes:
-- Xbox 360 wireless controller vibration fix 
-- 8BitDo controller heartbeat fix
-- Two new Xbox-specific modes: "DDR" for emulating an official DDR gamepad, and "Lightgun", for emulating an official lightgun with a mouse or Namco GunCon 2.
-- Novation Launchpad support as an input device, allowing you to use your Launchpad as a fully customizable controller, great for fighting games or accessibility-related mappings. 
+- [x] Xbox 360 wireless controller vibration fix 
+- [x] 8BitDo controller heartbeat fix
+- [ ] Two new Xbox-specific modes: "DDR" for emulating an official DDR gamepad, and "Lightgun", for emulating an official lightgun with a mouse or Namco GunCon 2.
+- [ ] Novation Launchpad support as an input device, allowing you to use your Launchpad as a fully customizable controller, great for fighting games or accessibility-related mappings. 
 
 
 # OGX-Mini 2026
