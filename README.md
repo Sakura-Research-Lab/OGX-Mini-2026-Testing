@@ -1,4 +1,12 @@
 # OGX-Mini 2026
+Testing build for OGX-Mini-2026. Aims to incorporate the following changes:
+- Xbox 360 wireless controller vibration fix 
+- 8BitDo controller heartbeat fix
+- Two new Xbox-specific modes: "DDR" for emulating an official DDR gamepad, and "Lightgun", for emulating an official lightgun with a mouse or Namco GunCon 2.
+- Novation Launchpad support as an input device, allowing you to use your Launchpad as a fully customizable controller, great for fighting games or accessibility-related mappings. 
+
+
+# OGX-Mini 2026
 ![OGX-Mini Boards](images/OGX-Mini-github.jpg "OGX-Mini Boards")
 
 Firmware for the RP2040, capable of emulating gamepads for several game consoles. The firmware comes in many flavors, supported on the [Adafruit Feather USB Host board](https://www.adafruit.com/product/5723), Pi Pico, Pi Pico 2, Pi Pico W, Pi Pico 2 W, Waveshare RP2040-Zero, Waveshare/SpotPear RP2350-A, Pico/ESP32 hybrid, and a 4-Channel RP2040-Zero setup.
